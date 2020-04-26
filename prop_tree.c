@@ -20,6 +20,8 @@
 #define PROP_AREA_MAGIC (0x50726f70)
 #define PROP_AREA_VERSION (0x312e3030)
 
+#define PI_SERIAL_DIRTY(serial) ((serial)&1)
+
 static inline int sys_futex(void *addr1, int op, int val1, struct timespec *timeout, void *addr2, int val3)
 {
 	int saved_errno = errno;
@@ -273,17 +275,29 @@ void * x_prop_init(const char * path){
 /*
 * pa is the value return from x_prop_init();
 */
-void* x_prop_get(void * pa_, const char * name, char * val, unsigned int val_len){
+// Wait for non-locked serial, and retrieve it with acquire semantics.
+static uint32_t pi_serial(tPropInfo* pi) {
+  uint32_t serial = atomic_load_explicit(&pi->serial, memory_order_acquire);
+  while (PI_SERIAL_DIRTY(serial)) {
+    sys_futex(&pi->serial, FUTEX_WAIT,serial,NULL,NULL,0);
+    serial = atomic_load_explicit(&pi->serial, memory_order_acquire);
+  }
+  return serial;
+}
+
+unsigned int x_prop_get(void * pa_, const char * name, char * val, unsigned int val_len){
+	uint32_t serial = 0;
 	tPropArea * pa = (tPropArea *)pa_;
 
-	if(!pa || !name || !val) return NULL;
+	if(!pa || !name || !val) return -1;
 
 	tPropInfo * pi = find_prop(pa,name,strlen(name),NULL,0,0);
 	if(pi && val){
+		serial = pi_serial(pi);/*for data rw sync!!!*/
 		snprintf(val,val_len,"%s",pi->value);
-		return pi;
+		return serial;
 	}
-	return NULL;
+	return -1;
 }
 int x_prop_set(void * pa_, const char * name, char * val){
 	tPropArea * pa = (tPropArea *)pa_;
@@ -309,8 +323,6 @@ int x_prop_set(void * pa_, const char * name, char * val){
 
   	/*to wake the monitor threads*/
   	atomic_store_explicit(&pi->serial, (val_len << 24) | ((serial + 1) & 0xffffff), memory_order_release);
-
-  	printf("----x_prop_set:%08x------\n",atomic_load_explicit(&pi->serial, memory_order_relaxed));
     sys_futex(&pi->serial, FUTEX_WAKE,INT_MAX,NULL,NULL,0);
 
     atomic_store_explicit(&pa->serial,
@@ -367,6 +379,7 @@ int x_prop_wait(void * pi_, unsigned int old_serial, unsigned int *new_serial_p,
 	tPropInfo * pi = (tPropInfo *)pi_;
 	return _wait(&pi->serial,old_serial,new_serial_p,timeout);
 }
+
 
 unsigned int x_prop_get_pi_serial(void * pi_){
 	tPropInfo * pi = (tPropInfo *)pi_;

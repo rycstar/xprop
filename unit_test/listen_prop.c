@@ -10,10 +10,7 @@ int main(int argc, char * argv[]){
 	unsigned int old_s = 0, new_s = 0 , test_times = 15;
 	pa = x_prop_init("/tmp/__prop__");
 	assert(pa);
-	pi = x_prop_get(pa,argv[1],val,sizeof(val));
-	assert(pi);
-
-	old_s = x_prop_get_pi_serial(pi);
+	old_s = x_prop_get(pa,argv[1],val,sizeof(val));
 
 	do{
 		printf("-----times:%d---olds:%08x--\n",test_times,old_s);
