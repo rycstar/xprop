@@ -1,0 +1,9 @@
+1. This project is aimed to implement android prop system in embeded linux system with C11
+2. The core struct is the binary-trie designed by Google.
+
+Next develop point:
+1. add prop service for prop settings.
+2. add multi prop-file mmap support to optimize the prop system.
+
+Compile cmd:
+gcc -o ./unit_test/prop_listen ./unit_test/listen_prop.c prop_tree.c -I ./api/
