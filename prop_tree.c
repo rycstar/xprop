@@ -11,6 +11,7 @@
 #include <linux/futex.h>
 #include <sys/time.h>
 #include <sys/syscall.h>
+#include <time.h>
 #include "prop_tree.h"
 #include "prop_api.h"
 
@@ -285,19 +286,19 @@ static uint32_t pi_serial(tPropInfo* pi) {
   return serial;
 }
 
-unsigned int x_prop_get(void * pa_, const char * name, char * val, unsigned int val_len){
+void* x_prop_get(void * pa_, const char * name, char * val, unsigned int val_len){
 	uint32_t serial = 0;
 	tPropArea * pa = (tPropArea *)pa_;
 
-	if(!pa || !name || !val) return -1;
+	if(!pa || !name || !val) return NULL;
 
 	tPropInfo * pi = find_prop(pa,name,strlen(name),NULL,0,0);
 	if(pi && val){
 		serial = pi_serial(pi);/*for data rw sync!!!*/
 		snprintf(val,val_len,"%s",pi->value);
-		return serial;
+		return pi;
 	}
-	return -1;
+	return NULL;
 }
 int x_prop_set(void * pa_, const char * name, char * val){
 	tPropArea * pa = (tPropArea *)pa_;
@@ -353,15 +354,33 @@ int x_prop_add(void * pa_, const char * name, char * val){
   	return 0;
 }
 
+/*******************************monitor functions*****************************/
+static struct timespec * timeoutCalc(int timeout, struct timespec * timespec_){
+	if(timeout > 0 && timespec_){
+		/*clock_gettime(CLOCK_MONOTONIC, timespec_); 
+		timespec_->tv_sec += timeout / 1000 ; 
+		timespec_->tv_nsec += (1000 * 1000) * (timeout % 1000);*/
+		timespec_->tv_sec = timeout / 1000; 
+		timespec_->tv_nsec = (1000 * 1000) * (timeout % 1000);
+		return timespec_;
+	}
+	return NULL;
+}
+
 static int _wait(atomic_uint * serial_, uint32_t old_serial, uint32_t *new_serial_p,int timeout){
 	int rc = 0;
 	uint32_t tmp_serial = 0;
 	struct timespec timeout_;
+	struct timespec * p_timeout = NULL;
+
 	if(!serial_){
 		return -1;
 	}
+
+	p_timeout = timeoutCalc(timeout,&timeout_);
+	
 	do{
-		if((rc = sys_futex(serial_, FUTEX_WAIT,old_serial,NULL,NULL,0)) != 0 && rc != -ETIMEDOUT){
+		if((rc = sys_futex(serial_, FUTEX_WAIT,old_serial,p_timeout,NULL,0)) != 0 && rc != -ETIMEDOUT){
 			return -1;
 		}
 		tmp_serial = atomic_load_explicit(serial_,memory_order_acquire);
@@ -383,9 +402,9 @@ int x_prop_wait(void * pi_, unsigned int old_serial, unsigned int *new_serial_p,
 
 unsigned int x_prop_get_pi_serial(void * pi_){
 	tPropInfo * pi = (tPropInfo *)pi_;
-	return atomic_load_explicit(&pi->serial,memory_order_relaxed);
+	return atomic_load_explicit(&pi->serial,memory_order_acquire);
 }
 unsigned int x_prop_get_pa_serial(void * pa_){
 	tPropArea * pa = (tPropArea *)pa_;
-	return atomic_load_explicit(&pa->serial,memory_order_relaxed);
+	return atomic_load_explicit(&pa->serial,memory_order_acquire);
 }

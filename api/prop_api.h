@@ -15,7 +15,7 @@ void * x_prop_init(const char * path);
 /*
 * return the point of the prop, if you want to monitor the prop, use this val to call x_prop_wait.
 */
-unsigned int x_prop_get(void * pa_, const char * name, char * val, unsigned int val_len);
+void* x_prop_get(void * pa_, const char * name, char * val, unsigned int val_len);
 int x_prop_set(void * pa_, const char * name, char * val);
 int x_prop_add(void * pa_, const char * name, char * val);
 
