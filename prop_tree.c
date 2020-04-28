@@ -290,12 +290,12 @@ void* x_prop_get(void * pa_, const char * name, char * val, unsigned int val_len
 	uint32_t serial = 0;
 	tPropArea * pa = (tPropArea *)pa_;
 
-	if(!pa || !name || !val) return NULL;
+	if(!pa || !name) return NULL;
 
 	tPropInfo * pi = find_prop(pa,name,strlen(name),NULL,0,0);
-	if(pi && val){
+	if(pi){
 		serial = pi_serial(pi);/*for data rw sync!!!*/
-		snprintf(val,val_len,"%s",pi->value);
+		if(val)	snprintf(val,val_len,"%s",pi->value);
 		return pi;
 	}
 	return NULL;
@@ -310,12 +310,10 @@ int x_prop_set(void * pa_, const char * name, char * val){
 	if (val_len >= PROP_VALUE_MAX || is_read_only(name)) {
 	    return -1;
 	}
-	
   	pi = find_prop(pa,name,strlen(name),NULL,0,0);
   	if(!pi){
   		return -1;
   	}
-
   	serial = atomic_load_explicit(&pi->serial, memory_order_relaxed);
   	serial |= 1;
   	atomic_store_explicit(&pi->serial, serial, memory_order_relaxed);
