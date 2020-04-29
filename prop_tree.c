@@ -273,6 +273,14 @@ void * x_prop_init(const char * path){
 	return (void *)map_prop_area_ro(path); 
 }
 
+int x_prop_uninit(void ** pa_){
+	if(*pa_){
+		munmap(*pa_,PA_SIZE);
+		*pa_ = NULL;
+	}
+	return 0;
+}
+
 /*
 * pa is the value return from x_prop_init();
 */
@@ -287,14 +295,13 @@ static uint32_t pi_serial(tPropInfo* pi) {
 }
 
 void* x_prop_get(void * pa_, const char * name, char * val, unsigned int val_len){
-	uint32_t serial = 0;
 	tPropArea * pa = (tPropArea *)pa_;
 
 	if(!pa || !name) return NULL;
 
 	tPropInfo * pi = find_prop(pa,name,strlen(name),NULL,0,0);
 	if(pi){
-		serial = pi_serial(pi);/*for data rw sync!!!*/
+		pi_serial(pi);/*for data rw sync!!!*/
 		if(val)	snprintf(val,val_len,"%s",pi->value);
 		return pi;
 	}

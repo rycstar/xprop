@@ -8,12 +8,11 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include "prop_tree.h"
-
-#define PROP_SRV_SOCKET_PATH "/tmp/prop_srv"
-
+#include "prop_api.h"
 
 static void event_run(tPropArea * pa, int *sock){
-	int r = 0, res = 0,fromlen = 0;
+	int r = 0, res = 0;
+	unsigned int fromlen = 0;
 	char buf[256];
 	char * name = NULL, * val = NULL;
 	char * split_point = NULL;
@@ -24,16 +23,12 @@ static void event_run(tPropArea * pa, int *sock){
 	fds.fd = *sock;
 	fds.events = POLLIN;
 
-/*for test*/
-	usleep(5000*1000);
-
 	while(1){
 		r = poll(&fds, 1, -1);
 		if(r > 0){
 			if (fds.revents & fds.events){
 				if((res = recvfrom(*sock, buf, sizeof(buf) - 1, 0,(struct sockaddr *) &from, &fromlen)) > 0){
 					buf[res] = '\0';
-					printf("get buf (%s)\n",buf);
 					split_point = strstr(buf,"\r\n");
 					if(split_point){
 						*split_point = '\0';
@@ -53,7 +48,7 @@ static void event_run(tPropArea * pa, int *sock){
 }
 
 int main(int argc, char * argv[]){
-	int c = 0, index = 0;
+	//int c = 0, index = 0;
 	char * def_sys_config = NULL;
 
 	int sock = 0;
@@ -81,7 +76,7 @@ int main(int argc, char * argv[]){
 	}
 #endif	
 
-	pa = map_prop_area_rw("/tmp/__prop__");
+	pa = map_prop_area_rw(DEFAULT_PROP_PATH);
 
 	if(!pa){
 		printf("Failed to mmap prop area\n");
@@ -90,8 +85,9 @@ int main(int argc, char * argv[]){
 
 	/*load system default configs*/
 	if(def_sys_config){
-
+		//load_prop_file(pa,def_sys_config);
 	}
+	x_prop_add(pa, "sys.abc.xxx", "idiot");
 
 	/*start local socket service*/
 	sock = socket(PF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);

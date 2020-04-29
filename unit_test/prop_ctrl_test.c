@@ -9,7 +9,7 @@ int main(int argc, char * argv[]){
 	void * ctl = NULL;
 	int i = 0;
 	char value[32] = {0};
-	ctl = x_prop_ctrl_open("/tmp/prop_srv");
+	ctl = x_prop_ctrl_open(PROP_SRV_SOCKET_PATH);
 	assert(ctl);
 
 	do{

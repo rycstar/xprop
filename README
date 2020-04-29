@@ -2,10 +2,8 @@
 2. The core struct is the binary-trie designed by Google.
 
 Next develop point:
-1. add prop service for prop settings.
 2. add multi prop-file mmap support to optimize the prop system.
 
 Compile cmd:
-gcc -o prop_srv ./service/prop_service.c  prop_tree.c -I ./api/ -I ./ -lrt
-gcc -o prop_ctrl ./unit_test/prop_ctrl_test.c ./service/prop_ctrl.c  prop_tree.c -I ./api/ -I ./ -lrt
-gcc -o prop_get ./unit_test/get_prop.c prop_tree.c -I ./api -I ./ -lrt
+gcc -o prop_ctrl ./unit_test/prop_ctrl_test.c -I ./api -L ./ -lxpropctrl
+gcc -o prop_get ./unit_test/get_prop.c -I ./api -L ./ -lxprop
