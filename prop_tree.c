@@ -1,3 +1,14 @@
+/***********************************************************
+THIS IS AN UNPUBLISHED WORK CONTAINING FANVIL TECHNOLOGY CO., LTD.
+CONFIDENTIAL AND PROPRIETARY INFORMATION.  IF PUBLICATION OCCURS, THE
+ FOLLOWING NOTICE APPLIES: "COPYRIGHT 2015 FANVIL TECHNOLOGY CO., LTD.
+ ALL RIGHTS RESERVED"
+
+Author: Terry Rong
+Last Modified by: Terry Rong, 2020-04-30
+
+************************************************************/
+
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>

@@ -60,9 +60,6 @@ typedef struct prop_area
 }tPropArea;
 
 
-
-
-
 tPropInfo * find_prop(tPropArea * const pa, const char * name, uint32_t name_len, \
 	const char * val, uint32_t val_len,uint8_t allow_alloc);
 

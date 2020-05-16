@@ -1,21 +1,7 @@
 #ifndef __PROP_API_H
 #define __PROP_API_H
 
-#define DEFAULT_PROP_PATH "/tmp/__prop__"
-#define PROP_SRV_SOCKET_PATH "/tmp/prop_srv"
-
-
-/*********************For unix socket communication***********************/
-
-/*
-* return a point to 'ctl'
-*/
-void* x_prop_ctrl_open();
-int x_prop_ctrl_request_async(void * ctl, const char * name, const char * val);
-int x_prop_ctrl_request_sync(void * ctl, const char * name, const char * val, char * reply, int reply_len, \
-	void (*msg_cb)(char *msg, size_t len));
-int x_prop_ctrl_close(void * ctl);
-
+#include "prop_common.h"
 
 /*system prop API*/
 //int system_prop_init();

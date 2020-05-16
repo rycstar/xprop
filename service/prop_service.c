@@ -47,8 +47,61 @@ static void event_run(tPropArea * pa, int *sock){
 	}
 }
 
+static char * remove_head_space(char * src){
+	char *tmp = src;
+	while(*tmp && *tmp == ' ') tmp++;
+	return tmp;
+}
+
+static char * remove_tail_char(char * src, char c){
+	char *tmp = src;
+	int len = strlen(tmp);
+	while(len > 0 && *(tmp + len - 1) == c) len--;
+    *(tmp + len) = '\0';
+	return tmp;
+}
+
+static char * remove_unused_space(char * src){
+	char * tmp = remove_tail_char(src, ' ');
+	return remove_head_space(tmp);
+}
+
+static void load_prop_file(tPropArea *pa, const char * filename){
+	FILE *stream = NULL;
+	char *line = NULL, *format_line = NULL;
+	size_t len = 0;
+	ssize_t nread = 0;
+	
+	char *p_name = NULL, * p_val =NULL; 
+	
+	stream = fopen(filename,"r");
+
+	if(stream){
+	    while((nread = getline(&line, &len, stream))!= -1 ){
+	    	line[nread - 1] = '\0';/*the line include '\n' and not include '\0'*/
+	        
+			format_line = remove_tail_char(line,'\n');
+			format_line = remove_tail_char(format_line, '\r');/*for windows file*/
+			format_line = remove_head_space(format_line);
+
+	        if(format_line[0] == '#') continue;
+	        
+	        p_val = strstr(format_line,"=");
+            if(p_val){
+                *p_val = 0;
+                p_name = remove_unused_space(format_line);
+               	p_val = remove_unused_space(++p_val);
+                x_prop_add(pa,p_name, p_val);
+	        }
+	    }
+	    if(line) free(line);
+	    fclose(stream);
+	}
+}
+
 int main(int argc, char * argv[]){
 	//int c = 0, index = 0;
+	int i = 0;
 	char * def_sys_config = NULL;
 
 	int sock = 0;
@@ -70,10 +123,6 @@ int main(int argc, char * argv[]){
 		}
 	}
 	if(optind < argc) def_sys_config = argv[index];
-#else
-	if(argc >= 2){
-		def_sys_config = argv[1];
-	}
 #endif	
 
 	pa = map_prop_area_rw(DEFAULT_PROP_PATH);
@@ -84,10 +133,11 @@ int main(int argc, char * argv[]){
 	}
 
 	/*load system default configs*/
-	if(def_sys_config){
-		//load_prop_file(pa,def_sys_config);
+	for(i = 1; i < argc; i++){
+		def_sys_config = argv[i];
+		if(def_sys_config)	load_prop_file(pa,def_sys_config);
 	}
-	x_prop_add(pa, "sys.abc.xxx", "idiot");
+	x_prop_add(pa, "ro.author", "terry.rong");
 
 	/*start local socket service*/
 	sock = socket(PF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);

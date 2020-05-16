@@ -1,0 +1,7 @@
+#just for test
+
+sys.build.time = 2012.12.31   
+sys.software.version = T0.1.8  
+  sys.hardware.version = 0.1.5
+
+   #sys.unused.test = xxxx

@@ -4,26 +4,28 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "prop_api.h"
+#include "prop_ctrl_api.h"
 
 typedef struct prop_ctrl
 {
 	int s;
+    int initialized_;
 	struct sockaddr_un local;
 	struct sockaddr_un dest;
 }tPropCtrl;
+
+static tPropCtrl g_prop_ctrl_;
 
 #define PROP_CTRL_IFACE_CLIENT_DIR "/tmp"
 #define PROP_CTRL_IFACE_CLIENT_PREFIX "prop_ctrl_"
 void* x_prop_ctrl_open(const char *srv_path){
 	int ret = 0,flags = 0;
 	static int count = 0;/*open count in one process*/
-	tPropCtrl *ctrl = malloc(sizeof(tPropCtrl));
+    tPropCtrl * ctrl = &g_prop_ctrl_;
 	memset(ctrl,0,sizeof(tPropCtrl));
 
 	ctrl->s = socket(PF_UNIX, SOCK_DGRAM, 0);
     if (ctrl->s < 0) {
-            free(ctrl);
             return NULL;
     }
     ctrl->local.sun_family = AF_UNIX;
@@ -65,14 +67,14 @@ void* x_prop_ctrl_open(const char *srv_path){
                     goto conn_fail;
             }
     }
-
+    ctrl->initialized_ = 1;
 	return (void *)ctrl;
 
 conn_fail:
 	unlink(ctrl->local.sun_path);
 sock_fail:
     close(ctrl->s);
-    free(ctrl);
+    ctrl->s = 0;
     return NULL;
 }
 
@@ -86,14 +88,12 @@ int x_prop_ctrl_request_async(void * ctl, const char * name, const char * val){
 		printf("prop send request(%s) error\n",cmd);
 		return -1;
 	}
-
-	/*wait reply*/
 	return 0;
 }
 
 int x_prop_ctrl_request_sync(void * ctl, const char * name, const char * val, char * reply, int reply_len, \
 	void (*msg_cb)(char *msg, size_t len)){
-
+    if( ! g_prop_ctrl_.initialized_ ) return -1;
 	return 0;
 }
 
@@ -103,8 +103,27 @@ int x_prop_ctrl_close(void * ctl){
 	if(ctrl){
 		unlink(ctrl->local.sun_path);
 		if(ctrl->s) close(ctrl->s);
-    	free(ctrl);
     	ret = 0;
 	}
 	return ret;
+}
+
+int __attribute__((constructor)) system_prop_ctrl_open(){
+    return x_prop_ctrl_open(PROP_SRV_SOCKET_PATH) ? 0 : -1;
+}
+
+int system_prop_request_async(const char * name, const char * val){
+    if( ! g_prop_ctrl_.initialized_ ) return -1;
+    return x_prop_ctrl_request_async((void *)&g_prop_ctrl_, name, val);
+}
+
+int system_prop_request_sync(const char * name, const char * val,char * reply, int reply_len, \
+    void (*msg_cb)(char *msg, size_t len)){
+    if( ! g_prop_ctrl_.initialized_ ) return -1;
+    return x_prop_ctrl_request_sync((void *)&g_prop_ctrl_, name, val, reply, reply_len,msg_cb);
+}
+
+int __attribute__((destructor))  system_prop_ctrl_close(){
+    if( ! g_prop_ctrl_.initialized_ ) return -1;
+    return x_prop_ctrl_close((void *)&g_prop_ctrl_);
 }
