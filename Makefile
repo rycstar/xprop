@@ -1,4 +1,4 @@
-#COMPILE_PREFIX=arm-linux-gnueabihf-
+COMPILE_PREFIX=arm-linux-gnueabihf-
 LIBPROP_TARGET :=libxprop.so
 LIBPROP_CTRL_TARGET :=libxpropctrl.so
 BIN_TARGET := xprop_srv

@@ -7,3 +7,4 @@ Next develop point:
 Compile cmd:
 gcc -o prop_ctrl ./unit_test/prop_ctrl_test.c -I ./api -L ./ -lxpropctrl
 gcc -o prop_get ./unit_test/get_prop.c -I ./api -L ./ -lxprop
+gcc -o prop_set ./unit_test/set_prop.c -I ./api -L ./ -lxpropctrl
