@@ -91,7 +91,7 @@ static void load_prop_file(tPropArea *pa, const char * filename){
                 *p_val = 0;
                 p_name = remove_unused_space(format_line);
                	p_val = remove_unused_space(++p_val);
-                x_prop_add(pa,p_name, p_val);
+               	if(strlen(p_name) > 0 && strlen(p_val) > 0) x_prop_add(pa,p_name, p_val);
 	        }
 	    }
 	    if(line) free(line);

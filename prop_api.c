@@ -21,6 +21,11 @@ void * system_prop_get(const char * name, char * val, unsigned int val_len){
 	if(!g_prop_sys.initialized_) return NULL;
 	return x_prop_get(g_prop_sys.pa, name, val, val_len);
 }
+
+int system_prop_foreach(void (*propCb)(const void *pi, void * private), void * private){
+	if(!g_prop_sys.initialized_) return -1;
+	return x_prop_foreach(g_prop_sys.pa,propCb,private);
+}
 /*
 int system_prop_set(const char * name, char * val){
 	if(!g_prop_sys.initialized_) return -1;
@@ -32,9 +37,13 @@ int system_prop_wait(void * pi_, unsigned int old_serial, unsigned int *new_seri
 	return x_prop_wait(pi_,old_serial,new_serial_p,timeout);
 }
 
-int system_prop_get_pi_serial(void * pi_){
+int system_prop_get_pi_serial(const void * pi_){
 	if(!g_prop_sys.initialized_) return 0;
 	return x_prop_get_pi_serial(pi_);
+}
+
+int system_prop_get_pi_info(const void * pi_, char * name, int name_len, char * val, int val_len){
+	return x_prop_get_pi_info(pi_, name, name_len, val, val_len);
 }
 
 int system_prop_get_pa_serial(){

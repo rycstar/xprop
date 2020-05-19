@@ -28,7 +28,7 @@ Last Modified by: Terry Rong, 2020-04-30
 
 #define __BUF_ALIGN(__value, __alignment) (((__value) + (__alignment)-1) & ~((__alignment)-1))
 #define PA_ROOT_NODE(pa) ((tPropBt *)(pa->data))
-#define PA_SIZE  (128 * 1024)
+#define PA_SIZE  (64 * 1024)
 #define PROP_AREA_MAGIC (0x50726f70)
 #define PROP_AREA_VERSION (0x312e3030)
 
@@ -265,10 +265,46 @@ static tPropInfo * _find_prop(tPropArea * pa, tPropBt * const trie, const char *
 	
 }
 
+int _foreach_prop(tPropArea * pa, tPropBt * const trie, void (*propCb)(const tPropInfo *pi, void * private), void * private){
+	int err;
+	uint32_t offset = 0;
+	tPropInfo * info;
+	if(!trie) return -1;
+	offset = atomic_load_explicit(&trie->left, memory_order_relaxed);
+	if (offset != 0) {
+		err = _foreach_prop(pa,to_prop_bt(pa,&trie->left), propCb, private);
+		if (err < 0) return err;
+	}
+
+	offset = atomic_load_explicit(&trie->prop, memory_order_relaxed);
+	if(offset != 0){
+		info = to_prop_info(pa, &trie->prop);
+		if(!info) return -1;
+		propCb(info, private);
+	}
+
+	offset = atomic_load_explicit(&trie->children, memory_order_relaxed);
+	if(offset != 0){
+		err = _foreach_prop(pa,to_prop_bt(pa,&trie->children), propCb, private);
+		if (err < 0) return err;
+	}
+
+	offset = atomic_load_explicit(&trie->right, memory_order_relaxed);
+	if(offset != 0){
+		err = _foreach_prop(pa,to_prop_bt(pa,&trie->right), propCb, private);
+		if (err < 0) return err;
+	}
+	return 0;
+}
+
 tPropInfo * find_prop(tPropArea * const pa, const char * name, uint32_t name_len, \
 	const char * val, uint32_t val_len,uint8_t allow_alloc){
 
 	return _find_prop(pa,PA_ROOT_NODE(pa),name,name_len,val,val_len,allow_alloc);
+}
+
+int foreach_prop(tPropArea * pa, void (*propCb)(const tPropInfo *pi, void * private), void * private){
+	return _foreach_prop(pa,PA_ROOT_NODE(pa),propCb,private);
 }
 
 /*****************************API functions********************************/
@@ -318,6 +354,7 @@ void* x_prop_get(void * pa_, const char * name, char * val, unsigned int val_len
 	}
 	return NULL;
 }
+
 int x_prop_set(void * pa_, const char * name, char * val){
 	tPropArea * pa = (tPropArea *)pa_;
 	tPropInfo * pi;
@@ -370,6 +407,12 @@ int x_prop_add(void * pa_, const char * name, char * val){
   	return 0;
 }
 
+int x_prop_foreach(void * pa_, void (*propCb)(const tPropInfo *pi, void * private), void * private){
+	tPropArea * pa = (tPropArea *)pa_;
+	if(!pa || !propCb) return -1;
+
+	return foreach_prop(pa,propCb,private);
+}
 /*******************************monitor functions*****************************/
 static struct timespec * timeoutCalc(int timeout, struct timespec * timespec_){
 	if(timeout > 0 && timespec_){
@@ -415,12 +458,22 @@ int x_prop_wait(void * pi_, unsigned int old_serial, unsigned int *new_serial_p,
 	return _wait(&pi->serial,old_serial,new_serial_p,timeout);
 }
 
+int x_prop_get_pi_info(const void * pi_, char * name, int name_len, char * val, int val_len){
+	tPropInfo * pi = (tPropInfo *)pi_;
+	if(pi){
+		pi_serial(pi);/*for data rw sync!!!*/
+		if(name)	snprintf(name,name_len,"%s",pi->name);
+		if(val)		snprintf(val,val_len,"%s",pi->value);
+	}
+	return 0;
+}
 
-unsigned int x_prop_get_pi_serial(void * pi_){
+unsigned int x_prop_get_pi_serial(const void * pi_){
 	tPropInfo * pi = (tPropInfo *)pi_;
 	return atomic_load_explicit(&pi->serial,memory_order_acquire);
 }
-unsigned int x_prop_get_pa_serial(void * pa_){
+
+unsigned int x_prop_get_pa_serial(const void * pa_){
 	tPropArea * pa = (tPropArea *)pa_;
 	return atomic_load_explicit(&pa->serial,memory_order_acquire);
 }
