@@ -265,14 +265,14 @@ static tPropInfo * _find_prop(tPropArea * pa, tPropBt * const trie, const char *
 	
 }
 
-int _foreach_prop(tPropArea * pa, tPropBt * const trie, void (*propCb)(const tPropInfo *pi, void * private), void * private){
+int _foreach_prop(tPropArea * pa, tPropBt * const trie, void (*propCb)(const tPropInfo *pi, void * priv), void * priv){
 	int err;
 	uint32_t offset = 0;
 	tPropInfo * info;
 	if(!trie) return -1;
 	offset = atomic_load_explicit(&trie->left, memory_order_relaxed);
 	if (offset != 0) {
-		err = _foreach_prop(pa,to_prop_bt(pa,&trie->left), propCb, private);
+		err = _foreach_prop(pa,to_prop_bt(pa,&trie->left), propCb, priv);
 		if (err < 0) return err;
 	}
 
@@ -280,18 +280,18 @@ int _foreach_prop(tPropArea * pa, tPropBt * const trie, void (*propCb)(const tPr
 	if(offset != 0){
 		info = to_prop_info(pa, &trie->prop);
 		if(!info) return -1;
-		propCb(info, private);
+		propCb(info, priv);
 	}
 
 	offset = atomic_load_explicit(&trie->children, memory_order_relaxed);
 	if(offset != 0){
-		err = _foreach_prop(pa,to_prop_bt(pa,&trie->children), propCb, private);
+		err = _foreach_prop(pa,to_prop_bt(pa,&trie->children), propCb, priv);
 		if (err < 0) return err;
 	}
 
 	offset = atomic_load_explicit(&trie->right, memory_order_relaxed);
 	if(offset != 0){
-		err = _foreach_prop(pa,to_prop_bt(pa,&trie->right), propCb, private);
+		err = _foreach_prop(pa,to_prop_bt(pa,&trie->right), propCb, priv);
 		if (err < 0) return err;
 	}
 	return 0;
@@ -303,8 +303,8 @@ tPropInfo * find_prop(tPropArea * const pa, const char * name, uint32_t name_len
 	return _find_prop(pa,PA_ROOT_NODE(pa),name,name_len,val,val_len,allow_alloc);
 }
 
-int foreach_prop(tPropArea * pa, void (*propCb)(const tPropInfo *pi, void * private), void * private){
-	return _foreach_prop(pa,PA_ROOT_NODE(pa),propCb,private);
+int foreach_prop(tPropArea * pa, void (*propCb)(const tPropInfo *pi, void * priv), void * priv){
+	return _foreach_prop(pa,PA_ROOT_NODE(pa),propCb,priv);
 }
 
 /*****************************API functions********************************/
@@ -407,11 +407,11 @@ int x_prop_add(void * pa_, const char * name, char * val){
   	return 0;
 }
 
-int x_prop_foreach(void * pa_, void (*propCb)(const tPropInfo *pi, void * private), void * private){
+int x_prop_foreach(void * pa_, void (*propCb)(const tPropInfo *pi, void * priv), void * priv){
 	tPropArea * pa = (tPropArea *)pa_;
 	if(!pa || !propCb) return -1;
 
-	return foreach_prop(pa,propCb,private);
+	return foreach_prop(pa,propCb,priv);
 }
 /*******************************monitor functions*****************************/
 static struct timespec * timeoutCalc(int timeout, struct timespec * timespec_){

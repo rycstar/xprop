@@ -22,9 +22,9 @@ void * system_prop_get(const char * name, char * val, unsigned int val_len){
 	return x_prop_get(g_prop_sys.pa, name, val, val_len);
 }
 
-int system_prop_foreach(void (*propCb)(const void *pi, void * private), void * private){
+int system_prop_foreach(void (*propCb)(const void *pi, void * priv), void * priv){
 	if(!g_prop_sys.initialized_) return -1;
-	return x_prop_foreach(g_prop_sys.pa,propCb,private);
+	return x_prop_foreach(g_prop_sys.pa,propCb,priv);
 }
 /*
 int system_prop_set(const char * name, char * val){

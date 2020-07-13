@@ -83,7 +83,7 @@ int x_prop_uninit(void ** pa_);
 void* x_prop_get(void * pa_, const char * name, char * val, unsigned int val_len);
 int x_prop_set(void * pa_, const char * name, char * val);
 int x_prop_add(void * pa_, const char * name, char * val);
-int x_prop_foreach(void * pa_, void (*propCb)(const tPropInfo *pi, void * private), void * private);
+int x_prop_foreach(void * pa_, void (*propCb)(const tPropInfo *pi, void * priv), void * priv);
 int x_prop_wait_any(void * pa_, unsigned int old_serial, unsigned int *new_serial_p, int timeout/*ms*/);
 int x_prop_wait(void * pi_, unsigned int old_serial, unsigned int *new_serial_p, int timeout/*ms*/);
 
