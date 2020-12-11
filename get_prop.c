@@ -1,16 +1,17 @@
 #include <stdio.h>
 #include <string.h>
-#include "prop_api.h"
+#include "api/prop_api.h"
 
 static void prop_show_cb(const void * pi, void * unused){
+    
 	char name[128] = {0};
 	char val[128] = {0};
 	system_prop_get_pi_info(pi, name, sizeof(name), val,sizeof(val));
-	printf("%s = %s\n", name, val);
+	printf("%s = %s \n", name, val);
 }
 
 int main(int argc, char * argv[]){
-	char name[128] = {0};
+	//char name[128] = {0};
 	char val[128] = {0};
 	if(argc == 1){
 		/*list all the prop*/
