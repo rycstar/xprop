@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "prop_ctrl_api.h"
+//#include "prop_ctrl_api.h"
+#include "api/prop_api.h"
 
 static int check_name(const char * name){
 	int ret = 0;
@@ -19,14 +20,19 @@ static int check_val(const char * value){
 }
 
 int main(int argc, char * argv[]){
-	int i = 0;
+    int ret = 0;
 	if(argc != 3){
 		printf("Usage: prop_set [name] [value]\n");
 		return -1;
 	}
+
 	if(!check_name(argv[1])) return -1;
 	if(!check_val(argv[2])) return -1;
-	system_prop_request_async(argv[1],argv[2]);
+    ret = system_prop_set(argv[1], argv[2]);
+    if(ret){
+        printf("%s=%s set error\n",argv[1], argv[2]);
+    }
+	//system_prop_request_async(argv[1],argv[2]);
 
 	return 0;
 }

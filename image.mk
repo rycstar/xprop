@@ -8,10 +8,6 @@ endif
 		cp $(FV_APP_PATH)/x_prop/libxprop.so $(IMAGE_INSTALL_DIR)/rootfs/lib/libxprop.so ; \
 	fi;
 
-	if [ -f $(FV_APP_PATH)/x_prop/libxpropctrl.so ]; then \
-		cp $(FV_APP_PATH)/x_prop/libxpropctrl.so $(IMAGE_INSTALL_DIR)/rootfs/lib/libxpropctrl.so ; \
-	fi;
-
 	if [ -f $(FV_APP_PATH)/x_prop/xprop_srv ]; then \
 		cp $(FV_APP_PATH)/x_prop/xprop_srv $(IMAGE_INSTALL_DIR)/rootfs/bin/xprop_srv ; \
 		$(STRIP) --strip-unneeded $(IMAGE_INSTALL_DIR)/rootfs/bin/xprop_srv; \

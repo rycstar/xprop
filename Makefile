@@ -1,64 +1,76 @@
+
 COMPILE_PREFIX=arm-linux-gnueabihf-
-LIBPROP_TARGET :=libxprop.so
-LIBPROP_CTRL_TARGET :=libxpropctrl.so
-BIN_TARGET := xprop_srv
-PROP_GET_BIN_TARGET := prop_get
-PROP_SET_BIN_TARGET := prop_set
 CC := $(COMPILE_PREFIX)gcc
+C++ := $(COMPILE_PREFIX)g++
 AR := $(COMPILE_PREFIX)ar
-RANLIB := $(COMPILE_PREFIX)ranlib
-STRIP := $(COMPILE_PREFIX)strip
 
-CFLAGS := -g -Wall -O2
-BIN_CFLAGS := -g -Wall -O2
-#BIN_CFLAGS += -L./ -ltty
-CFLAGS += -I ./api -I ./
+LIBPROP_TARGET :=libxprop.so
+BIN_TARGET := xprop_srv
+#BIN_TEST1 := test1 
+#BIN_TEST2 := test2
+BIN_PROP_SET := prop_set
+BIN_PROP_GET := prop_get
+CFLAGS := -g -Wall -O2 -fpic
+CFLAGS += -I ./ -I private -L ./
+LIB := -lpthread  -lxprop
+.PHONY:all clean
+#objs : $(LIBPROP_TARGET_OBJS) 
 
-LDFLAGS := -L ./
+all : $(LIBPROP_TARGET) $(BIN_TARGET) $(BIN_TEST1)	$(BIN_TEST2) $(BIN_PROP_GET) $(BIN_PROP_SET)
+
+system_properties.o : system_properties.cpp
+	$(C++) $(CFLAGS) -fpic -c $< -o $@
+
 
 LIBPROP_TARGET_OBJS =\
-	prop_tree.o \
-	prop_api.o
+	system_properties.o 
 
-LIBPROP_CTRL_TARGET_OBJS = \
-	service/prop_ctrl.o
+$(LIBPROP_TARGET):$(LIBPROP_TARGET_OBJS)
+	$(C++) -shared -o $@ $(LIBPROP_TARGET_OBJS)
 
-BIN_SRC =\
-	prop_tree.c \
-	service/prop_service.c
+property_service.o : property_service.cpp
+	$(C++) $(CFLAGS) -c $< -o $@
 
-PROP_GET_BIN_SRC = ./unit_test/get_prop.c
 
-PROP_SET_BIN_SRC = ./unit_test/set_prop.c
+BIN_OBJS =\
+	property_service.o
 
-all : $(LIBPROP_TARGET) $(LIBPROP_CTRL_TARGET) $(BIN_TARGET) $(PROP_GET_BIN_TARGET) $(PROP_SET_BIN_TARGET)
+$(BIN_TARGET) : $(BIN_OBJS)
+	$(C++) $(CFLAGS) -o $@  $(BIN_OBJS) $(LIB)
 
-objs : $(LIBPROP_TARGET_OBJS) $(LIBPROP_CTRL_TARGET_OBJS)
 
-prop_tree.o : prop_tree.c
-	$(CC) $(CFLAGS) -fpic -c $< -o $@
+%.o:%.cpp 
+	$(C++) $(CFLAGS) -c $< -o $@
 
-prop_api.o : prop_api.c
-	$(CC) $(CFLAGS) -fpic -c $< -o $@
+TEST1_OBJS=\
+	system_properties_test.o
 
-service/prop_ctrl.o : service/prop_ctrl.c
-	$(CC) $(CFLAGS) -fpic -c $< -o $@
+TEST2_OBJS=\
+	system_properties_test2.o
+
+
+
+$(BIN_TEST1): $(TEST1_OBJS) 
+	$(C++) $(CFLAGS) -o  $@ $(TEST1_OBJS) $(LIB)
+
+$(BIN_TEST2): $(TEST2_OBJS)
+	$(C++) $(CFLAGS) -o  $@ $(TEST2_OBJS) $(LIB)
+
+PROP_GET_OBJS =\
+	get_prop.o
+PROP_SET_OBJS =\
+	set_prop.o
+
+$(BIN_PROP_GET): $(PROP_GET_OBJS)
+	$(C++) $(CFLAGS) -o  $@ $(PROP_GET_OBJS) $(LIB)
+	
+$(BIN_PROP_SET): $(PROP_SET_OBJS) 
+	$(C++) $(CFLAGS) -o  $@ $(PROP_SET_OBJS) $(LIB)
 
 clean:
-	rm -rf *~ *.o *.d  $(TARGET) $(BIN_TARGET) $(PROP_GET_BIN_TARGET) $(PROP_SET_BIN_TARGET) $(LIBPROP_TARGET) $(LIBPROP_CTRL_TARGET) $(LIBPROP_CTRL_TARGET_OBJS)
-install:
-	@echo Nothing to be make
+	rm -rf *~ *.o *.d  $(TARGET) $(BIN_TARGET) $(LIBPROP_TARGET) $(BIN_TEST1) $(BIN_TEST2) $(BIN_PROP_GET) $(BIN_PROP_SET) 
 
-$(LIBPROP_TARGET) : $(LIBPROP_TARGET_OBJS)
-	$(CC) -shared -o $@ $(LIBPROP_TARGET_OBJS)
 
-$(LIBPROP_CTRL_TARGET) : $(LIBPROP_CTRL_TARGET_OBJS)
-	$(CC) -shared -o $@ $(LIBPROP_CTRL_TARGET_OBJS)
-#	$(STRIP) $@
-$(BIN_TARGET) :
-	$(CC) $(CFLAGS) -o $@  $(BIN_SRC)
-#	$(STRIP) $@
-$(PROP_GET_BIN_TARGET) :
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@  $(PROP_GET_BIN_SRC) -lxprop
-$(PROP_SET_BIN_TARGET) :
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@  $(PROP_SET_BIN_SRC) -lxpropctrl
+
+
+

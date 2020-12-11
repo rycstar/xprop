@@ -1,10 +1,15 @@
-1. This project is aimed to implement android prop system in embeded linux system with C11
+1. This project is aimed to implement android prop system in embeded linux system with C++11
 2. The core struct is the binary-trie designed by Google.
 
 Next develop point:
-2. add multi prop-file mmap support to optimize the prop system.
+2. add multi prop-file mmap support to optimize the prop system.(already support---wyl)
 
-Compile cmd:
-gcc -o prop_ctrl ./unit_test/prop_ctrl_test.c -I ./api -L ./ -lxpropctrl
-gcc -o prop_get ./unit_test/get_prop.c -I ./api -L ./ -lxprop
-gcc -o prop_set ./unit_test/set_prop.c -I ./api -L ./ -lxpropctrl
+
+property service : "/dev/socket/property_service"
+__properties__  : "/dev/__properties__/"
+
+Support key words  "import"
+default property contexts:  /etc/property_contexts
+default property conf    :  /etc/default.prop
+
+
